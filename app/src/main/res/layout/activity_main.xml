@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#F5F7FB" android:fillViewport="true">
+    <LinearLayout android:orientation="vertical" android:padding="20dp"
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+
+        <LinearLayout android:orientation="vertical" android:gravity="center"
+            android:padding="24dp" android:background="@drawable/bg_gradient"
+            android:layout_width="match_parent" android:layout_height="wrap_content">
+            <ImageView android:src="@drawable/ic_clean" android:contentDescription="Limpeza"
+                android:layout_width="76dp" android:layout_height="76dp" />
+            <TextView android:text="Limpeza" android:textColor="#FFFFFF" android:textSize="28sp"
+                android:textStyle="bold" android:gravity="center" android:layout_marginTop="8dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:text="Deixe seu aplicativo mais leve" android:textColor="#EAF2FF" android:textSize="15sp"
+                android:gravity="center" android:layout_marginTop="4dp"
+                android:layout_width="match_parent" android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout android:orientation="vertical" android:background="@drawable/card_bg"
+            android:elevation="3dp" android:padding="20dp" android:layout_marginTop="18dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content">
+            <TextView android:text="ARMAZENAMENTO TEMPORÁRIO" android:textColor="#6B7280" android:textSize="12sp" android:textStyle="bold"
+                android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/status" android:text="Analisando..." android:textColor="#172033" android:textSize="24sp" android:textStyle="bold"
+                android:layout_marginTop="6dp" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:text="Cache que este aplicativo pode limpar com segurança." android:textColor="#6B7280" android:textSize="14sp"
+                android:layout_marginTop="4dp" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <Button android:id="@+id/cleanButton" android:text="LIMPAR AGORA" android:textColor="#FFFFFF" android:textStyle="bold"
+            android:textSize="16sp" android:background="@drawable/button_primary" android:backgroundTint="@null"
+            android:layout_marginTop="18dp" android:minHeight="56dp" android:stateListAnimator="@null"
+            android:layout_width="match_parent" android:layout_height="56dp" />
+
+        <Button android:id="@+id/storageButton" android:text="Gerenciar armazenamento do Android" android:textColor="#1A5FB4" android:textStyle="bold"
+            android:textSize="14sp" android:background="@drawable/button_secondary" android:backgroundTint="@null"
+            android:layout_marginTop="12dp" android:minHeight="52dp" android:stateListAnimator="@null"
+            android:layout_width="match_parent" android:layout_height="52dp" />
+
+        <LinearLayout android:orientation="vertical" android:background="@drawable/card_bg"
+            android:padding="18dp" android:layout_marginTop="18dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content">
+            <TextView android:text="Como funciona" android:textColor="#172033" android:textSize="18sp" android:textStyle="bold"
+                android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <TextView android:text="✓ Limpa o cache deste aplicativo\n✓ Atualiza o espaço liberado\n✓ Abre as configurações para você gerenciar o armazenamento do aparelho"
+                android:textColor="#4B5563" android:textSize="14sp" android:lineSpacingExtra="5dp"
+                android:layout_marginTop="10dp" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView android:text="Limpeza • versão 1.0" android:textColor="#9CA3AF" android:textSize="12sp"
+            android:gravity="center" android:layout_marginTop="22dp" android:layout_marginBottom="20dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+</ScrollView>
