@@ -1,12 +1,14 @@
 # Limpeza
 
-App Android de limpeza de armazenamento (versão 1.1).
+App Android de limpeza de armazenamento (versão 1.2).
 
 ## O que ele faz
-- Mostra o cache do próprio app e o espaço livre do aparelho.
-- **Liberar cache de todos os apps**: pede ao Android (StorageManager, Android 8+) que apague caches de outros apps para abrir espaço. O sistema decide quanto apagar.
-- **Limpar arquivos temporários**: procura no armazenamento compartilhado arquivos `.tmp`, `.log`, downloads incompletos, miniaturas (`.thumbnails`) e pastas vazias, todos com mais de 24h. Mostra o resumo e pede confirmação antes de apagar. Exige a permissão "acesso a todos os arquivos".
-- Limpar o cache do próprio app e abrir as configurações de armazenamento do Android.
+Um único botão, **Limpar tudo**, executa em sequência:
+1. Limpa o cache do próprio app.
+2. Pede ao Android (StorageManager, Android 8+) que apague caches de outros apps para abrir espaço. O sistema decide quanto apagar.
+3. Procura no armazenamento compartilhado arquivos `.tmp`, `.log`, downloads incompletos, miniaturas (`.thumbnails`) e pastas vazias, todos com mais de 24h. Mostra o resumo e pede confirmação antes de apagar. Exige a permissão "acesso a todos os arquivos"; sem ela, o app limpa só o cache.
+
+Há também um botão para abrir as configurações de armazenamento do Android e uma tela de resumo com o total liberado.
 
 ## Aviso importante
 Este app **apaga arquivos de forma permanente** (eles não vão para a lixeira). Use por sua conta e risco, e leia sempre o resumo antes de confirmar. O projeto é fornecido "como está", sem garantia, conforme a licença MIT. Ele foi escrito com ajuda de IA e ainda não passou por testes extensivos em aparelhos reais.

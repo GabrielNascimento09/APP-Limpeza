@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,10 +32,14 @@ public class MainActivity extends Activity {
             "DCIM", "Pictures", "Movies", "Music", "Download", "Documents", "Podcasts",
             "Ringtones", "Alarms", "Notifications", "Audiobooks", "Recordings");
 
+    // estados da etapa de arquivos temporários no relatório final
+    private static final int TEMP_NOT_CHECKED = 0, TEMP_NONE = 1, TEMP_DECLINED = 2, TEMP_DELETED = 3;
+
     private TextView status;
     private TextView freeSpace;
-    private Button freeButton, tempButton, cleanButton, storageButton;
+    private Button cleanAllButton, storageButton;
     private boolean busy = false;
+    private boolean pendingPermission = false;
 
     private static class ScanResult {
         final List<File> files = new ArrayList<>();
@@ -44,34 +47,37 @@ public class MainActivity extends Activity {
         long bytes = 0;
     }
 
+    private static class Report {
+        long ownBytes = 0;
+        long systemBytes = 0;
+        boolean systemSupported = true;
+        String systemError = null;
+        int tempState = TEMP_NOT_CHECKED;
+        int tempFiles = 0, tempDirs = 0;
+        long tempBytes = 0;
+    }
+
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_main);
         status = findViewById(R.id.status);
         freeSpace = findViewById(R.id.freeSpace);
-        freeButton = findViewById(R.id.freeButton);
-        tempButton = findViewById(R.id.tempButton);
-        cleanButton = findViewById(R.id.cleanButton);
+        cleanAllButton = findViewById(R.id.cleanAllButton);
         storageButton = findViewById(R.id.storageButton);
         updateStatus();
 
-        freeButton.setOnClickListener(v -> freeSystemSpace());
-        tempButton.setOnClickListener(v -> startTempCleanup());
-
-        cleanButton.setOnClickListener(v -> {
-            deleteContents(getCacheDir());
-            File external = getExternalCacheDir();
-            if (external != null) deleteContents(external);
-            Toast.makeText(this, "Cache do aplicativo limpo!", Toast.LENGTH_SHORT).show();
-            updateStatus();
-        });
-
+        cleanAllButton.setOnClickListener(v -> onCleanAllClicked());
         storageButton.setOnClickListener(v -> openStorageSettings());
     }
 
     @Override protected void onResume() {
         super.onResume();
         updateStatus();
+        // voltou da tela de permissão: continua a limpeza automaticamente
+        if (pendingPermission) {
+            pendingPermission = false;
+            if (hasStoragePermission()) runCleanAll(true);
+        }
     }
 
     // ---------------------------------------------------------------- status
@@ -100,9 +106,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean value) {
         busy = value;
-        freeButton.setEnabled(!value);
-        tempButton.setEnabled(!value);
-        cleanButton.setEnabled(!value);
+        cleanAllButton.setEnabled(!value);
         storageButton.setEnabled(!value);
     }
 
@@ -114,45 +118,151 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ------------------------------------- 1) liberar cache de todos os apps
+    // ------------------------------------------------------- botão "Limpar tudo"
 
-    private void freeSystemSpace() {
+    private void onCleanAllClicked() {
         if (busy) return;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            Toast.makeText(this, "Este recurso exige Android 8.0 ou superior. Abrindo as configurações de armazenamento.",
-                    Toast.LENGTH_LONG).show();
-            openStorageSettings();
+        if (hasStoragePermission()) {
+            runCleanAll(true);
             return;
         }
+        new AlertDialog.Builder(this)
+                .setTitle("Limpar tudo")
+                .setMessage("Posso limpar o cache dos apps sem nenhuma permissão extra.\n\n"
+                        + "Para também apagar arquivos temporários, preciso de acesso aos arquivos do aparelho. "
+                        + "Se você permitir, a limpeza continua sozinha quando voltar para o app.")
+                .setPositiveButton("Permitir acesso", (d, w) -> {
+                    pendingPermission = true;
+                    requestStoragePermission();
+                })
+                .setNegativeButton("Só limpar cache", (d, w) -> runCleanAll(false))
+                .show();
+    }
+
+    private void runCleanAll(final boolean withTemp) {
+        if (busy) return;
         setBusy(true);
-        final long before = freeBytes();
+        Toast.makeText(this, "Limpando...", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
-            String error = null;
-            try {
-                requestSystemCacheClear();
-            } catch (Exception e) {
-                error = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            final Report report = new Report();
+
+            // 1) cache do próprio app
+            File ext = getExternalCacheDir();
+            report.ownBytes = folderSize(getCacheDir()) + (ext != null ? folderSize(ext) : 0);
+            deleteContents(getCacheDir());
+            if (ext != null) deleteContents(ext);
+
+            // 2) cache dos outros apps (pede ao sistema, Android 8+)
+            report.systemSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+            if (report.systemSupported) {
+                long before = freeBytes();
+                try {
+                    requestSystemCacheClear();
+                } catch (Exception e) {
+                    report.systemError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                }
+                report.systemBytes = Math.max(0, freeBytes() - before);
             }
-            final long after = freeBytes();
-            final String err = error;
+
+            // 3) procura arquivos temporários (a exclusão só acontece após confirmação)
+            final ScanResult scan = withTemp ? new ScanResult() : null;
+            if (scan != null) {
+                try {
+                    File root = Environment.getExternalStorageDirectory().getCanonicalFile();
+                    scanDir(root, scan, 0, System.currentTimeMillis());
+                } catch (Exception ignored) { }
+                report.tempState = (scan.files.isEmpty() && scan.dirs.isEmpty()) ? TEMP_NONE : TEMP_DECLINED;
+            }
+
             runOnUiThread(() -> {
                 setBusy(false);
                 updateStatus();
-                String msg;
-                if (after > before) {
-                    msg = "Espaço liberado: " + formatSize(after - before) + "\n\nAntes: " + formatSize(before)
-                            + "\nDepois: " + formatSize(after);
-                } else if (err != null) {
-                    msg = "O sistema não conseguiu liberar mais espaço agora.\n\nDetalhe: " + err;
+                if (scan != null && report.tempState == TEMP_DECLINED) {
+                    askToDeleteTemp(report, scan);
                 } else {
-                    msg = "Não havia mais cache para o sistema liberar.";
+                    showReport(report);
                 }
-                msg += "\n\nO Android decide o que pode apagar. Em alguns aparelhos ele libera só parte do cache.";
-                new AlertDialog.Builder(this).setTitle("Resultado").setMessage(msg)
-                        .setPositiveButton("OK", null).show();
             });
         }).start();
     }
+
+    private void askToDeleteTemp(final Report report, final ScanResult scan) {
+        String msg = "Cache já limpo: " + formatSize(report.ownBytes + report.systemBytes) + " liberados.\n\n"
+                + "Também encontrei " + scan.files.size() + " arquivo(s) temporário(s) ("
+                + formatSize(scan.bytes) + ") e " + scan.dirs.size() + " pasta(s) vazia(s).\n\n"
+                + "Inclui: .tmp, .log, miniaturas (.thumbnails) e downloads incompletos com mais de 24h. "
+                + "Fotos e vídeos não são apagados.\n\n"
+                + "Os itens apagados não vão para a lixeira. Deseja apagar?";
+        new AlertDialog.Builder(this).setTitle("Arquivos temporários").setMessage(msg)
+                .setPositiveButton("Apagar", (d, w) -> deleteTempFiles(report, scan))
+                .setNegativeButton("Agora não", (d, w) -> showReport(report))
+                .setOnCancelListener(d -> showReport(report))
+                .show();
+    }
+
+    private void deleteTempFiles(final Report report, final ScanResult scan) {
+        setBusy(true);
+        new Thread(() -> {
+            int deletedFiles = 0, deletedDirs = 0;
+            long freed = 0;
+            for (File f : scan.files) {
+                long len = f.length();
+                if (f.delete()) { deletedFiles++; freed += len; }
+            }
+            for (File d : scan.dirs) {
+                if (d.delete()) deletedDirs++;
+            }
+            report.tempFiles = deletedFiles;
+            report.tempDirs = deletedDirs;
+            report.tempBytes = freed;
+            report.tempState = TEMP_DELETED;
+            runOnUiThread(() -> {
+                setBusy(false);
+                updateStatus();
+                showReport(report);
+            });
+        }).start();
+    }
+
+    private void showReport(Report r) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cache deste app: ").append(formatSize(r.ownBytes)).append("\n");
+
+        if (!r.systemSupported) {
+            sb.append("Cache de outros apps: exige Android 8 ou superior\n");
+        } else if (r.systemBytes > 0) {
+            sb.append("Cache de outros apps: ").append(formatSize(r.systemBytes)).append("\n");
+        } else if (r.systemError != null) {
+            sb.append("Cache de outros apps: o sistema não liberou nada agora\n");
+        } else {
+            sb.append("Cache de outros apps: nada a liberar\n");
+        }
+
+        switch (r.tempState) {
+            case TEMP_DELETED:
+                sb.append("Arquivos temporários: ").append(formatSize(r.tempBytes)).append(" (")
+                        .append(r.tempFiles).append(" arquivo(s), ").append(r.tempDirs).append(" pasta(s))\n");
+                break;
+            case TEMP_NONE:
+                sb.append("Arquivos temporários: nenhum encontrado\n");
+                break;
+            case TEMP_DECLINED:
+                sb.append("Arquivos temporários: mantidos\n");
+                break;
+            default:
+                sb.append("Arquivos temporários: não verificados (sem permissão)\n");
+        }
+
+        long total = r.ownBytes + r.systemBytes + r.tempBytes;
+        sb.append("\nTotal liberado: ").append(formatSize(total));
+        if (r.systemSupported) {
+            sb.append("\n\nO Android decide quanto do cache dos outros apps pode apagar; em alguns aparelhos ele libera só parte.");
+        }
+        new AlertDialog.Builder(this).setTitle("Limpeza concluída").setMessage(sb.toString())
+                .setPositiveButton("OK", null).show();
+    }
+
+    // ------------------------------------- cache de todos os apps (via sistema)
 
     @TargetApi(Build.VERSION_CODES.O)
     private void requestSystemCacheClear() throws IOException {
@@ -173,27 +283,14 @@ public class MainActivity extends Activity {
         if (last != null) throw last;
     }
 
-    // --------------------------------- 2) arquivos temporários no armazenamento
+    // --------------------------------- permissão e arquivos temporários
 
     private boolean hasStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) return Environment.isExternalStorageManager();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+            return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
         return true;
-    }
-
-    private void startTempCleanup() {
-        if (busy) return;
-        if (!hasStoragePermission()) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permissão necessária")
-                    .setMessage("Para encontrar arquivos temporários o app precisa de acesso aos arquivos do aparelho. "
-                            + "Você será levado às configurações. Depois de permitir, volte e toque novamente.")
-                    .setPositiveButton("Continuar", (d, w) -> requestStoragePermission())
-                    .setNegativeButton("Cancelar", null).show();
-            return;
-        }
-        scanTempFiles();
     }
 
     private void requestStoragePermission() {
@@ -207,41 +304,6 @@ public class MainActivity extends Activity {
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQ_STORAGE);
         }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_STORAGE && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            scanTempFiles();
-        }
-    }
-
-    private void scanTempFiles() {
-        setBusy(true);
-        Toast.makeText(this, "Procurando arquivos temporários...", Toast.LENGTH_SHORT).show();
-        new Thread(() -> {
-            final ScanResult result = new ScanResult();
-            try {
-                File root = Environment.getExternalStorageDirectory().getCanonicalFile();
-                scanDir(root, result, 0, System.currentTimeMillis());
-            } catch (Exception ignored) { }
-            runOnUiThread(() -> {
-                setBusy(false);
-                if (result.files.isEmpty() && result.dirs.isEmpty()) {
-                    Toast.makeText(this, "Nenhum arquivo temporário encontrado.", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                String msg = "Encontrei " + result.files.size() + " arquivo(s) temporário(s) ("
-                        + formatSize(result.bytes) + ") e " + result.dirs.size() + " pasta(s) vazia(s).\n\n"
-                        + "Inclui: .tmp, .log, miniaturas (.thumbnails) e downloads incompletos com mais de 24h.\n\n"
-                        + "Os itens apagados não vão para a lixeira. Deseja apagar?";
-                new AlertDialog.Builder(this).setTitle("Limpar arquivos temporários").setMessage(msg)
-                        .setPositiveButton("Apagar", (d, w) -> deleteTempFiles(result))
-                        .setNegativeButton("Cancelar", null).show();
-            });
-        }).start();
     }
 
     /** Retorna true se a pasta ficará vazia depois de apagar os arquivos marcados. */
@@ -286,30 +348,6 @@ public class MainActivity extends Activity {
             if (f.isDirectory()) collectAll(f, r, depth + 1);
             else { r.files.add(f); r.bytes += f.length(); }
         }
-    }
-
-    private void deleteTempFiles(final ScanResult result) {
-        setBusy(true);
-        new Thread(() -> {
-            int deletedFiles = 0, deletedDirs = 0;
-            long freed = 0;
-            for (File f : result.files) {
-                long len = f.length();
-                if (f.delete()) { deletedFiles++; freed += len; }
-            }
-            for (File d : result.dirs) {
-                if (d.delete()) deletedDirs++;
-            }
-            final int nf = deletedFiles, nd = deletedDirs;
-            final long fr = freed;
-            runOnUiThread(() -> {
-                setBusy(false);
-                updateStatus();
-                new AlertDialog.Builder(this).setTitle("Concluído")
-                        .setMessage("Apaguei " + nf + " arquivo(s) (" + formatSize(fr) + ") e " + nd + " pasta(s) vazia(s).")
-                        .setPositiveButton("OK", null).show();
-            });
-        }).start();
     }
 
     private static boolean isTempName(String name) {

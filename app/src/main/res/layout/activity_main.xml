@@ -31,20 +31,10 @@
                 android:layout_marginTop="4dp" android:layout_width="match_parent" android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <Button android:id="@+id/freeButton" android:text="LIBERAR CACHE DE TODOS OS APPS" android:textColor="#FFFFFF" android:textStyle="bold"
-            android:textSize="15sp" android:background="@drawable/button_primary" android:backgroundTint="@null"
-            android:layout_marginTop="18dp" android:minHeight="56dp" android:stateListAnimator="@null"
-            android:layout_width="match_parent" android:layout_height="56dp" />
-
-        <Button android:id="@+id/tempButton" android:text="LIMPAR ARQUIVOS TEMPORÁRIOS" android:textColor="#FFFFFF" android:textStyle="bold"
-            android:textSize="15sp" android:background="@drawable/button_primary" android:backgroundTint="@null"
-            android:layout_marginTop="12dp" android:minHeight="56dp" android:stateListAnimator="@null"
-            android:layout_width="match_parent" android:layout_height="56dp" />
-
-        <Button android:id="@+id/cleanButton" android:text="Limpar cache deste app" android:textColor="#1A5FB4" android:textStyle="bold"
-            android:textSize="14sp" android:background="@drawable/button_secondary" android:backgroundTint="@null"
-            android:layout_marginTop="12dp" android:minHeight="52dp" android:stateListAnimator="@null"
-            android:layout_width="match_parent" android:layout_height="52dp" />
+        <Button android:id="@+id/cleanAllButton" android:text="LIMPAR TUDO" android:textColor="#FFFFFF" android:textStyle="bold"
+            android:textSize="17sp" android:background="@drawable/button_primary" android:backgroundTint="@null"
+            android:layout_marginTop="18dp" android:minHeight="60dp" android:stateListAnimator="@null"
+            android:layout_width="match_parent" android:layout_height="60dp" />
 
         <Button android:id="@+id/storageButton" android:text="Gerenciar armazenamento do Android" android:textColor="#1A5FB4" android:textStyle="bold"
             android:textSize="14sp" android:background="@drawable/button_secondary" android:backgroundTint="@null"
@@ -61,7 +51,7 @@
                 android:layout_marginTop="10dp" android:layout_width="match_parent" android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <TextView android:text="Limpeza • versão 1.1" android:textColor="#9CA3AF" android:textSize="12sp"
+        <TextView android:text="Limpeza • versão 1.2" android:textColor="#9CA3AF" android:textSize="12sp"
             android:gravity="center" android:layout_marginTop="22dp" android:layout_marginBottom="20dp"
             android:layout_width="match_parent" android:layout_height="wrap_content" />
     </LinearLayout>
