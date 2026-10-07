@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
 
         cleanAllButton.setOnClickListener(v -> onCleanAllClicked());
         storageButton.setOnClickListener(v -> openStorageSettings());
+        findViewById(R.id.securityButton).setOnClickListener(v -> startActivity(new Intent(this, SecurityActivity.class)));
     }
 
     @Override protected void onResume() {

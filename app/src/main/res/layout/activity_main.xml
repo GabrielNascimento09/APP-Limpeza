@@ -36,6 +36,11 @@
             android:layout_marginTop="18dp" android:minHeight="60dp" android:stateListAnimator="@null"
             android:layout_width="match_parent" android:layout_height="60dp" />
 
+        <Button android:id="@+id/securityButton" android:text="VERIFICAR SEGURANÇA" android:textColor="#1A5FB4" android:textStyle="bold"
+            android:textSize="15sp" android:background="@drawable/button_secondary" android:backgroundTint="@null"
+            android:layout_marginTop="12dp" android:minHeight="56dp" android:stateListAnimator="@null"
+            android:layout_width="match_parent" android:layout_height="56dp" />
+
         <Button android:id="@+id/storageButton" android:text="Gerenciar armazenamento do Android" android:textColor="#1A5FB4" android:textStyle="bold"
             android:textSize="14sp" android:background="@drawable/button_secondary" android:backgroundTint="@null"
             android:layout_marginTop="12dp" android:minHeight="52dp" android:stateListAnimator="@null"
@@ -46,12 +51,12 @@
             android:layout_width="match_parent" android:layout_height="wrap_content">
             <TextView android:text="Como funciona" android:textColor="#172033" android:textSize="18sp" android:textStyle="bold"
                 android:layout_width="match_parent" android:layout_height="wrap_content" />
-            <TextView android:text="✓ Pede ao Android para apagar o cache de todos os apps\n✓ Remove arquivos temporários (.tmp, .log, miniaturas, downloads incompletos) com mais de 24h\n✓ Remove pastas vazias\n✓ Mostra o que será apagado e pede confirmação"
+            <TextView android:text="✓ Pede ao Android para apagar o cache de todos os apps\n✓ Remove arquivos temporários (.tmp, .log, miniaturas, downloads incompletos) com mais de 24h\n✓ Remove pastas vazias\n✓ Mostra o que será apagado e pede confirmação\n✓ Verifica a segurança: sinais de risco em apps instalados e APKs baixados"
                 android:textColor="#4B5563" android:textSize="14sp" android:lineSpacingExtra="5dp"
                 android:layout_marginTop="10dp" android:layout_width="match_parent" android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <TextView android:text="Limpeza • versão 1.2" android:textColor="#9CA3AF" android:textSize="12sp"
+        <TextView android:text="Limpeza • versão 1.4" android:textColor="#9CA3AF" android:textSize="12sp"
             android:gravity="center" android:layout_marginTop="22dp" android:layout_marginBottom="20dp"
             android:layout_width="match_parent" android:layout_height="wrap_content" />
     </LinearLayout>

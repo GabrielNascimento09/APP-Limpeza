@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:background="@drawable/card_bg" android:padding="14dp"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+    <TextView android:id="@+id/itemDot" android:text="●" android:textSize="18sp"
+        android:layout_width="28dp" android:layout_height="wrap_content" />
+    <LinearLayout android:orientation="vertical"
+        android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content">
+        <TextView android:id="@+id/itemTitle" android:textColor="#172033" android:textSize="16sp" android:textStyle="bold"
+            android:maxLines="1" android:ellipsize="end"
+            android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <TextView android:id="@+id/itemReasons" android:textColor="#6B7280" android:textSize="13sp"
+            android:maxLines="2" android:ellipsize="end" android:layout_marginTop="2dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+</LinearLayout>
