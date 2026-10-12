@@ -1,18 +1,21 @@
 # Limpeza
 
-App Android de limpeza de armazenamento e verificação de segurança (versão 1.4).
+App Android de limpeza de armazenamento e verificação de segurança (versão 1.5).
 
 ## O que ele faz
-Um único botão, **Limpar tudo**, executa em sequência:
+Um botão, **Limpar tudo**, executa em sequência:
 1. Limpa o cache do próprio app.
 2. Pede ao Android (StorageManager, Android 8+) que apague caches de outros apps para abrir espaço. O sistema decide quanto apagar.
 3. Procura no armazenamento compartilhado arquivos `.tmp`, `.log`, downloads incompletos, miniaturas (`.thumbnails`) e pastas vazias, todos com mais de 24h. Mostra o resumo e pede confirmação antes de apagar. Exige a permissão "acesso a todos os arquivos"; sem ela, o app limpa só o cache.
 
 Há também um botão para abrir as configurações de armazenamento do Android.
 
+## Cache por app
+Tela que lista os apps com o tamanho do cache de cada um (do maior para o menor). Ao tocar num app, abre a tela dele no Android, onde dá para limpar só o cache daquele app. Mostrar os tamanhos exige a permissão "Acesso de uso", liberada nas configurações do aparelho. O Android não permite que um app comum limpe o cache de outros apps diretamente, por isso a limpeza final é feita pelo usuário nessa tela. O botão **Limpar tudo** continua disponível para limpar o cache de todos de uma vez.
+
 ## Verificar segurança
 Tela separada, que funciona 100% no aparelho (sem internet e sem enviar nada para fora). Não é um antivírus:
-1. **Apps instalados**: lista os apps instalados por você e aponta sinais de alerta: instalação fora de lojas conhecidas, serviço de acessibilidade ativo, leitura de notificações, administrador do dispositivo, acesso a SMS e chamadas, sobreposição de tela, instalação de outros apps, entre outros. Cada app recebe um nível (baixo, atenção ou alto) e dá para abrir as configurações dele para desinstalar.
+1. **Apps instalados**: lista os apps instalados por você (apps do sistema e pré-instalados pelo fabricante são ignorados) e aponta sinais de alerta: instalação fora de lojas conhecidas, serviço de acessibilidade ativo, leitura de notificações, administrador do dispositivo, acesso a SMS e chamadas, sobreposição de tela, instalação de outros apps, entre outros. Cada app recebe um nível (baixo, atenção ou alto) e dá para abrir as configurações dele para desinstalar.
 2. **APKs baixados**: procura arquivos `.apk` no armazenamento, analisa as permissões que eles pedem e permite apagar o arquivo antes de instalar. Exige a permissão "acesso a todos os arquivos".
 3. **Estado do aparelho**: patch de segurança, bloqueio de tela e depuração USB.
 

@@ -50,7 +50,8 @@ public class SecurityActivity extends Activity {
     private static final List<String> TRUSTED_INSTALLERS = Arrays.asList(
             "com.android.vending", "com.google.android.feedback", "com.sec.android.app.samsungapps",
             "com.xiaomi.mipicks", "com.xiaomi.market", "com.huawei.appmarket", "com.amazon.venezia",
-            "com.heytap.market", "com.oppo.market", "com.vivo.appstore", "org.fdroid.fdroid");
+            "com.heytap.market", "com.oppo.market", "com.vivo.appstore", "org.fdroid.fdroid",
+            "com.xiaomi.discover");
     private static final String[] SMS_PERMS = {
             "android.permission.READ_SMS", "android.permission.SEND_SMS",
             "android.permission.RECEIVE_SMS", "android.permission.RECEIVE_MMS"};
@@ -257,7 +258,10 @@ public class SecurityActivity extends Activity {
         for (PackageInfo pi : packages) {
             ApplicationInfo ai = pi.applicationInfo;
             if (ai == null) continue;
-            if ((ai.flags & ApplicationInfo.FLAG_SYSTEM) != 0) continue;
+            // ignora apps do sistema e apps pré-instalados pelo fabricante
+            if ((ai.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) continue;
+            if (isOnSystemPartition(ai.sourceDir)) continue;
+            if (pm.checkSignatures(pi.packageName, "android") == PackageManager.SIGNATURE_MATCH) continue;
             if (pi.packageName.equals(getPackageName())) continue;
 
             Item it = new Item();
@@ -273,9 +277,11 @@ public class SecurityActivity extends Activity {
 
             // origem da instalação
             String inst = it.installer;
-            if (inst == null || !TRUSTED_INSTALLERS.contains(inst)) {
-                String how = inst == null ? "origem desconhecida"
-                        : inst.contains("packageinstaller") ? "instalado manualmente por APK" : inst;
+            if (inst == null) {
+                // sem instalador registrado: costuma ser app pré-instalado pelo fabricante, então pesa pouco
+                addReason(it, 1, "Origem não identificada (pode ser app pré-instalado pelo fabricante)");
+            } else if (!TRUSTED_INSTALLERS.contains(inst)) {
+                String how = inst.contains("packageinstaller") ? "instalado manualmente por APK" : inst;
                 addReason(it, 2, "Instalado fora de uma loja conhecida (" + how + ")");
             }
 
@@ -303,11 +309,18 @@ public class SecurityActivity extends Activity {
             analyzePermissions(it, requested, granted);
 
             if (pm.getLaunchIntentForPackage(pi.packageName) == null)
-                addReason(it, 1, "Sem ícone na tela inicial");
+                addReason(it, 0, "Sem ícone na tela inicial");
 
             result.add(it);
         }
         return result;
+    }
+
+    private static boolean isOnSystemPartition(String path) {
+        if (path == null) return false;
+        String[] prefixes = {"/system/", "/system_ext/", "/product/", "/vendor/", "/odm/", "/oem/", "/apex/"};
+        for (String p : prefixes) if (path.startsWith(p)) return true;
+        return false;
     }
 
     @SuppressWarnings("deprecation")

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/card_bg" android:padding="14dp"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+    <LinearLayout android:orientation="vertical"
+        android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content">
+        <TextView android:id="@+id/appName" android:textColor="#172033" android:textSize="16sp" android:textStyle="bold"
+            android:maxLines="1" android:ellipsize="end"
+            android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <TextView android:id="@+id/appPkg" android:textColor="#9CA3AF" android:textSize="11sp"
+            android:maxLines="1" android:ellipsize="end" android:layout_marginTop="2dp"
+            android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+    <TextView android:id="@+id/appCache" android:textColor="#1A5FB4" android:textSize="14sp" android:textStyle="bold"
+        android:layout_marginStart="10dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+</LinearLayout>
